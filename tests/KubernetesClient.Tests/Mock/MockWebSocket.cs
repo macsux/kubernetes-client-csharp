@@ -1,11 +1,11 @@
-using Nito.AsyncEx;
 using System;
 using System.Collections.Concurrent;
 using System.Net.WebSockets;
 using System.Threading;
 using System.Threading.Tasks;
+using Nito.AsyncEx;
 
-namespace k8s.tests.Mock
+namespace k8s.Tests.Mock
 {
     public class MockWebSocket : WebSocket
     {
@@ -20,7 +20,7 @@ namespace k8s.tests.Mock
         {
             this.subProtocol = subProtocol;
         }
-        
+
         public void SetState(WebSocketState state)
         {
             this.state = state;

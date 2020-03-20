@@ -13,3 +13,4 @@ bin/
 # JetBrains Rider
 .idea/
 *.sln.iml
+examples/informers/Dockerfile

@@ -10,7 +10,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using Xunit;
 
-namespace k8s.tests
+namespace k8s.Tests
 {
     public class KubernetesExecTests
     {

@@ -1,11 +1,15 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <IsPackable>false</IsPackable>
-    <RootNamespace>k8s.tests</RootNamespace>
+    <RootNamespace>k8s.Tests</RootNamespace>
     <TargetFrameworks>netcoreapp2.1;netcoreapp2.0</TargetFrameworks>
+    <LangVersion>8</LangVersion>
+      <SignAssembly>true</SignAssembly>
+      <AssemblyOriginatorKeyFile>..\..\src\KubernetesClient\kubernetes-client.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
 
   <ItemGroup>
+      <PackageReference Include="System.Interactive.Async" Version="4.0.0" />
       <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.9">
           <!-- this is due to aspnet core 2.1 is not compatible with our code -->
           <AllowExplicitVersion>true</AllowExplicitVersion>
@@ -13,11 +17,19 @@
 
       <PackageReference Include="Microsoft.Extensions.Logging" Version="2.2.0" />
       <PackageReference Include="System.Reactive" Version="4.3.2" />
+
       <PackageReference Include="Nito.AsyncEx" Version="5.0.0" />
+
+      <PackageReference Include="FluentAssertions" Version="5.10.2" />
+      <PackageReference Include="NSubstitute" Version="4.2.1" />
+<!--      <PackageReference Include="WireMock.Net" Version="1.2.1" />-->
+      <PackageReference Include="Microsoft.Reactive.Testing" Version="4.3.2" />
   </ItemGroup>
 
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.0' ">
       <Compile Remove="Kubernetes.Exec.Tests.cs" />
+      <Compile Remove="WatchTests.cs" />
+
   </ItemGroup>
   <ItemGroup Condition=" '$(TargetFramework)' == 'netcoreapp2.1' ">
       <Compile Remove="Kubernetes.WebSockets.Tests.cs" />
@@ -31,6 +43,8 @@
     </PackageReference>
 
     <PackageReference Include="Microsoft.NET.Test.Sdk" Version="16.0.1" />
+
+    <PackageReference Include="WireMock.Net" Version="1.2.1" />
     <PackageReference Include="xunit" Version="2.4.1" />
     <PackageReference Include="xunit.runner.visualstudio" Version="2.4.1" />
     <PackageReference Include="Xunit.StaFact" Version="0.3.18" />

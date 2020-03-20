@@ -1,10 +1,14 @@
 using System;
+using System.Diagnostics;
 using System.IO;
+using System.Reactive.Disposables;
+using System.Reactive.Linq;
 using System.Runtime.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 using k8s.Exceptions;
 using k8s.Models;
+using Microsoft.Extensions.Logging;
 using Microsoft.Rest;
 using Microsoft.Rest.Serialization;
 
@@ -18,7 +22,9 @@ namespace k8s
 
         [EnumMember(Value = "DELETED")] Deleted,
 
-        [EnumMember(Value = "ERROR")] Error
+        [EnumMember(Value = "ERROR")] Error,
+
+        [EnumMember(Value = "BOOKMARK")] Bookmark
     }
 
     public class Watcher<T> : IDisposable
@@ -96,7 +102,6 @@ namespace k8s
                 Watching = true;
                 string line;
                 _streamReader = await _streamReaderCreator().ConfigureAwait(false);
-
                 // ReadLineAsync will return null when we've reached the end of the stream.
                 while ((line = await _streamReader.ReadLineAsync().ConfigureAwait(false)) != null)
                 {
@@ -170,6 +175,22 @@ namespace k8s
 
                 return content.StreamReader;
                 } , onEvent, onError, onClosed);
+        }
+        public static IObservable<k8s.Watcher<T>.WatchEvent> Watch<T>(this Task<HttpOperationResponse<KubernetesList<T>>> responseTask) where T : IKubernetesObject
+        {
+            return Observable.Create<k8s.Watcher<T>.WatchEvent>(observer =>
+            {
+                void OnNext(WatchEventType type, T item) => observer.OnNext(new k8s.Watcher<T>.WatchEvent {Type = type, Object = item});
+                var watcher = responseTask.Watch<T, KubernetesList<T>>(OnNext, observer.OnError, observer.OnCompleted);
+                var eventSubscription = Disposable.Create(() =>
+                {
+                    watcher.OnEvent -= OnNext;
+                    watcher.OnError -= observer.OnError;
+                    watcher.OnClosed -= observer.OnCompleted;
+                });
+                return new CompositeDisposable(watcher, eventSubscription);
+            });
+
         }
 
         /// <summary>

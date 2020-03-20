@@ -43,7 +43,7 @@ namespace k8s
             ValidateConfig(config);
             CaCerts = config.SslCaCerts;
             SkipTlsVerify = config.SkipTlsVerify;
-            SetCredentials(config); 
+            SetCredentials(config);
         }
 
         /// <summary>
@@ -158,7 +158,7 @@ namespace k8s
 
         partial void CustomInitialize()
         {
-#if NET452 
+#if NET452
             ServicePointManager.SecurityProtocol |= SecurityProtocolType.Tls12;
 #endif
             AppendDelegatingHandler<WatcherDelegatingHandler>();
@@ -168,8 +168,12 @@ namespace k8s
         private void AppendDelegatingHandler<T>() where T : DelegatingHandler, new()
         {
             var cur = FirstMessageHandler as DelegatingHandler;
-
-            while (cur != null)
+            if (cur == null)
+            {
+                FirstMessageHandler = new T();
+                return;
+            }
+            while(true)
             {
                 var next = cur.InnerHandler as DelegatingHandler;
 

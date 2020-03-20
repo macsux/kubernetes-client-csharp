@@ -92,16 +92,11 @@ namespace k8s.Tests
         [Fact]
         public async Task AsyncWatcher()
         {
-            var created = new AsyncManualResetEvent(false);
             var eventsReceived = new AsyncManualResetEvent(false);
 
-            using (var server = new MockKubeApiServer(testOutput, async httpContext =>
-            {
-                // block until reponse watcher obj created
-                await created.WaitAsync();
-                await WriteStreamLine(httpContext, MockAddedEventStreamLine);
-                return false;
-            }))
+            var replayer = new MockKubeApiServer.ResponsePlayer(MockAddedEventStreamLine.Replace("\r\n",""));
+
+            using (var server = new MockKubeApiServer(testOutput, replayer))
             {
                 var client = new Kubernetes(new KubernetesClientConfiguration
                 {
@@ -116,12 +111,11 @@ namespace k8s.Tests
                 }))
                 {
                     // here watcher is ready to use, but http server has not responsed yet.
-                    created.Set();
+                    replayer.SendNextResponse();
                     await Task.WhenAny(eventsReceived.WaitAsync(), Task.Delay(TestTimeout));
                 }
 
                 Assert.True(eventsReceived.IsSet);
-                Assert.True(created.IsSet);
             }
         }
 
@@ -364,7 +358,8 @@ namespace k8s.Tests
             {
                 var client = new Kubernetes(new KubernetesClientConfiguration
                 {
-                    Host = server.Uri.ToString()
+                    Host = server.Uri.ToString(),
+                    // Timeout = TimeSpan.FromSeconds(3)
                 });
 
                 var listTask = await client.ListNamespacedPodWithHttpMessagesAsync("default", watch: true);
